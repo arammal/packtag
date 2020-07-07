@@ -1,2 +1,11 @@
 target/
 dist/
+out
+build
+*.ipr
+*.iml
+*.iws
+MyEclipse
+classes
+*.developer.properties
+.idea/
