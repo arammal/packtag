@@ -132,6 +132,13 @@ public class ContextConfiguration {
 		return getProperty(context, "resources.external", TRUE).equalsIgnoreCase(TRUE);
 	}
 
+	public static boolean isEmbeddedResourcesEnabled(final ServletContext context) {
+		return getProperty(context, "resources.embedded", FALSE).equalsIgnoreCase(TRUE);
+	}
+
+	public static String getEmbeddedResourcesContainer(final ServletContext context) {
+		return getProperty(context, "resources.embedded.container", "META-INF/resources");
+	}
 
 	public static String getPackStrategyClassName(final ServletContext context, final String resourceType) {
 		return getProperty(context, resourceType + ".strategy");

@@ -1,6 +1,14 @@
 /* Project pack:tag >> https://github.com/galan/packtag */
 package net.sf.packtag.tag;
 
+import net.sf.packtag.util.ContextConfiguration;
+import net.sf.packtag.util.SafeLogger;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspTagException;
+import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -8,15 +16,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspTagException;
-import javax.servlet.jsp.tagext.BodyTagSupport;
-
-import net.sf.packtag.util.ContextConfiguration;
-import net.sf.packtag.util.SafeLogger;
 
 
 
@@ -72,18 +71,19 @@ public abstract class BaseTag extends BodyTagSupport {
 			result = result.trim();
 			if (result.startsWith(SLASH)) {
 				result = getContextPath() + result;
-			}
-			else {
+			} else {
 				if (!isExternalResource(result)) {
-					HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
-					String uri = request.getRequestURI();
-					// cut a possible file
-					String partPath = uri.substring(0, uri.lastIndexOf(SLASH) + 1);
+					if (!isEmbeddedResourcesEnabled()) {
+						HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
+						String uri = request.getRequestURI();
+						// cut a possible file
+						String partPath = uri.substring(0, uri.lastIndexOf(SLASH) + 1);
 
-					// we are not on the basepath
-					//if (!partPath.equals(SLASH)) {
-					result = partPath + result;
-					//}
+						// we are not on the basepath
+						//if (!partPath.equals(SLASH)) {
+						result = partPath + result;
+						//}
+					}
 				}
 			}
 		}
@@ -262,6 +262,15 @@ public abstract class BaseTag extends BodyTagSupport {
 		return ContextConfiguration.isExternalResourcesEnabled(pageContext.getServletContext());
 	}
 
+	/** Configuration; returns true, if external resources should be downloaded, minifed and compressed. */
+	protected boolean isEmbeddedResourcesEnabled() {
+		return ContextConfiguration.isEmbeddedResourcesEnabled(pageContext.getServletContext());
+	}
+
+	/** Configuration; returns true, if external resources should be downloaded, minifed and compressed. */
+	protected String getEmbeddedResourcesContainer() {
+		return ContextConfiguration.getEmbeddedResourcesContainer(pageContext.getServletContext());
+	}
 
 	/** Configuration; returns the name of the minification strategy */
 	protected String getPackStrategyClassName(final String resourceType) {

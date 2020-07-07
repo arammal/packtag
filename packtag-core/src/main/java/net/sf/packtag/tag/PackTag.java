@@ -1,26 +1,6 @@
 /* Project pack:tag >> https://github.com/galan/packtag */
 package net.sf.packtag.tag;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspTagException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.tagext.BodyContent;
-
 import net.sf.packtag.cache.PackCache;
 import net.sf.packtag.cache.Resource;
 import net.sf.packtag.implementation.DisabledPackStrategy;
@@ -31,25 +11,38 @@ import net.sf.packtag.util.FilenameUtils;
 import net.sf.packtag.util.HttpHeader;
 import net.sf.packtag.util.URIUtils;
 
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspTagException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.BodyContent;
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
  * Tag base class for resource-specific JspTags.
  *
- * @author  Daniel Galán y Martins
+ * @author Daniel Galán y Martins
  */
 public abstract class PackTag extends BaseTag {
 
 	private static final long serialVersionUID = -3714373962322644845L;
 
 
-	/** Called method, when the tag start */
+	/**
+	 * Called method, when the tag start
+	 */
 	public int doStartTag() throws JspTagException {
 		return EVAL_BODY_BUFFERED;
 	}
 
 
-	/** Called method, when the tag ends */
+	/**
+	 * Called method, when the tag ends
+	 */
 	public int doEndTag() throws JspException {
 		String absolutePath = determineAbsolutePath(getSrc());
 		boolean apDefined = (absolutePath != null) && !absolutePath.equals(EMPTY_STRING);
@@ -62,11 +55,9 @@ public abstract class PackTag extends BaseTag {
 			else {
 				handleCombinedResource();
 			}
-		}
-		catch (PackException pex) {
+		} catch (PackException pex) {
 			promoteError(pex.getMessage(), pex);
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append("Pack did not perfom successfull on ");
 			buffer.append(apDefined ? "'" + absolutePath + "': " : "combined Resource: ");
@@ -86,11 +77,9 @@ public abstract class PackTag extends BaseTag {
 		boolean reloaded = false;
 		if (isAbsolutePathWildcard(absolutePath)) {
 			reloaded = handleWildcardResource(absolutePath, writePackedResource);
-		}
-		else if (!isExternalResourcesEnabled() && isExternalResource(absolutePath)) {
+		} else if (!isExternalResourcesEnabled() && isExternalResource(absolutePath)) {
 			writeResouce(pageContext.getOut(), absolutePath);
-		}
-		else {
+		} else {
 			if (isEnabled()) {
 				reloaded = handleSingleResourceDelegate(absolutePath);
 				Resource resource = PackCache.getResourceByAbsolutePath(getServletContext(), absolutePath);
@@ -99,8 +88,7 @@ public abstract class PackTag extends BaseTag {
 					writeResouce(pageContext.getOut(), resource.getMappedPath());
 					addDeliveredResource(resource.getAbsolutePath());
 				}
-			}
-			else {
+			} else {
 				// if packing is not enabled, we just write out the resources
 				writeResouce(pageContext.getOut(), absolutePath);
 			}
@@ -118,8 +106,7 @@ public abstract class PackTag extends BaseTag {
 				resource = reloadSingleResource(absolutePath);
 				reloaded = true;
 			}
-		}
-		else {
+		} else {
 			resource = reloadSingleResource(absolutePath);
 			reloaded = true;
 		}
@@ -137,8 +124,7 @@ public abstract class PackTag extends BaseTag {
 				resource = reloadWildcardResource(absolutePath);
 				reloaded = true;
 			}
-		}
-		else {
+		} else {
 			resource = reloadWildcardResource(absolutePath);
 			reloaded = true;
 		}
@@ -148,8 +134,7 @@ public abstract class PackTag extends BaseTag {
 				writeResouce(pageContext.getOut(), resource.getMappedPath());
 				addDeliveredResource(resource.getAbsolutePath());
 			}
-		}
-		else {
+		} else {
 			// if packing is not enabled, we just write out the resources
 			String[] aps = resource.getWildcardAbsolutePathsSplitted();
 			for (int i = 0; i < aps.length; i++) {
@@ -182,8 +167,8 @@ public abstract class PackTag extends BaseTag {
 			}
 
 			Iterator iterAbsolutePaths = absolutePaths.iterator();
-			while(iterAbsolutePaths.hasNext()) {
-				String currentAbsolutePath = (String)iterAbsolutePaths.next();
+			while (iterAbsolutePaths.hasNext()) {
+				String currentAbsolutePath = (String) iterAbsolutePaths.next();
 				reloaded |= handleSingleResource(currentAbsolutePath, false);
 				if (!isExternalResourcesEnabled() && isExternalResource(currentAbsolutePath)) {
 					iterAbsolutePaths.remove();
@@ -212,8 +197,7 @@ public abstract class PackTag extends BaseTag {
 		String combinedAbsolutePaths = absolutePaths.toString();
 		if (PackCache.existResource(getServletContext(), combinedAbsolutePaths) && !reloaded) {
 			resource = PackCache.getResourceByAbsolutePath(getServletContext(), combinedAbsolutePaths);
-		}
-		else {
+		} else {
 			resource = reloadCombinedResource(absolutePaths);
 		}
 		return resource;
@@ -255,36 +239,57 @@ public abstract class PackTag extends BaseTag {
 				URLConnection conn = url.openConnection();
 				conn.setRequestProperty(HttpHeader.CONTENT_TYPE, getMimeType());
 				urlInputStream = conn.getInputStream();
-			}
-			catch (IOException ioe) {
+			} catch (IOException ioe) {
 				throw new PackException("Could not load external resource: " + absolutePath, ioe);
 			}
 			result = urlInputStream;
-		}
-		else {
-			String contextlessPath = getContextlessPath(absolutePath);
-			if (isFileCheckTimestamps()) {
-				String realPath = pageContext.getServletContext().getRealPath(contextlessPath);
-				File file = new File(realPath);
+		} else {
+			if (isEmbeddedResourcesEnabled()) {
+				String embeddedPath = getEmbeddedResourcesContainer() + absolutePath;
+				InputStream embeddedInputStream = null;
 				try {
-					result = new BufferedInputStream(new FileInputStream(file));
+					embeddedInputStream = PackTag.class.getResourceAsStream(embeddedPath);
+					if (embeddedInputStream == null) {
+						embeddedInputStream = PackTag.class.getClassLoader().getResourceAsStream(embeddedPath);
+					}
+					if (embeddedInputStream == null) {
+						embeddedInputStream = ClassLoader.getSystemResourceAsStream(embeddedPath);
+					}
+					if (embeddedInputStream == null) {
+						embeddedInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(embeddedPath);
+					}
+					if (embeddedInputStream == null) {
+						throw new IOException("Invalid path");
+					}
+				} catch (IOException ioe) {
+					throw new PackException("Could not load embedded resource: " + embeddedPath, ioe);
 				}
-				catch (FileNotFoundException fnfe) {
-					throw new PackException("Resource not found (" + absolutePath + ")", fnfe);
+				result = embeddedInputStream;
+			} else {
+				String contextlessPath = getContextlessPath(absolutePath);
+				if (isFileCheckTimestamps()) {
+					String realPath = pageContext.getServletContext().getRealPath(contextlessPath);
+					File file = new File(realPath);
+					try {
+						result = new BufferedInputStream(new FileInputStream(file));
+					} catch (FileNotFoundException fnfe) {
+						throw new PackException("Resource not found (" + absolutePath + ")", fnfe);
+					}
+				} else {
+					//TODO Aaargh... this just works every second time
+					// But WHY .. if you have a solution, please! give me a hand. Thanks
+					// (Because of this situation, this method was born (with the realpath madness above))
+					result = pageContext.getServletContext().getResourceAsStream(contextlessPath);
 				}
-			}
-			else {
-				//TODO Aaargh... this just works every second time
-				// But WHY .. if you have a solution, please! give me a hand. Thanks
-				// (Because of this situation, this method was born (with the realpath madness above))
-				result = pageContext.getServletContext().getResourceAsStream(contextlessPath);
 			}
 		}
 		return result;
 	}
 
 
-	/** Compresses the resource and stores it in the cache and as file (if cachetype is file) */
+	/**
+	 * Compresses the resource and stores it in the cache and as file (if cachetype is file)
+	 */
 	private Resource reloadSingleResource(final String absolutePath) throws Exception {
 		InputStream stream = getResourceStream(absolutePath);
 
@@ -298,8 +303,7 @@ public abstract class PackTag extends BaseTag {
 		if (isCachetypeServlet()) {
 			resource.setGzippedResource(gzipString(packedResource, UTF_8));
 			resource.setMimeType(getMimeType());
-		}
-		else if (isCachetypeFile()) {
+		} else if (isCachetypeFile()) {
 			storeFile(resource, packedResource);
 		}
 		if (isFileCheckTimestamps()) {
@@ -313,14 +317,16 @@ public abstract class PackTag extends BaseTag {
 	}
 
 
-	/** Compresses resources found, depending on the pattern */
+	/**
+	 * Compresses resources found, depending on the pattern
+	 */
 	private Resource reloadWildcardResource(final String absolutePath) throws Exception {
 		Resource result = null;
 		boolean reloaded = false;
 		List files = gatherWildcardAbsolutePaths(absolutePath);
 		Iterator iterFiles = files.iterator();
-		while(iterFiles.hasNext()) {
-			String file = (String)iterFiles.next();
+		while (iterFiles.hasNext()) {
+			String file = (String) iterFiles.next();
 			reloaded |= handleSingleResourceDelegate(file);
 		}
 		result = handleMultipleAbsolutePaths(reloaded, files);
@@ -334,14 +340,16 @@ public abstract class PackTag extends BaseTag {
 	}
 
 
-	/** Compresses multiple resources and stores them in the cache and as file (if cachetype is file) */
+	/**
+	 * Compresses multiple resources and stores them in the cache and as file (if cachetype is file)
+	 */
 	private Resource reloadCombinedResource(final List absolutePaths) throws Exception {
 		// Assumption: All resources allready have been loaded/reloaded by handleSingleResource
 
 		StringBuffer minifedBuffer = new StringBuffer();
 		Iterator iterAps = absolutePaths.iterator();
-		while(iterAps.hasNext()) {
-			String currentAbsolutePath = (String)iterAps.next();
+		while (iterAps.hasNext()) {
+			String currentAbsolutePath = (String) iterAps.next();
 			Resource resource = PackCache.getResourceByAbsolutePath(getServletContext(), currentAbsolutePath);
 			minifedBuffer.append(resource.getMinifedResource());
 			minifedBuffer.append("\n");
@@ -358,8 +366,7 @@ public abstract class PackTag extends BaseTag {
 		if (isCachetypeServlet()) {
 			resource.setGzippedResource(gzipString(packedResource, UTF_8));
 			resource.setMimeType(getMimeType());
-		}
-		else if (isCachetypeFile()) {
+		} else if (isCachetypeFile()) {
 			storeFile(resource, packedResource);
 		}
 		resource.setAbsolutePath(absolutePaths.toString());
@@ -370,7 +377,9 @@ public abstract class PackTag extends BaseTag {
 	}
 
 
-	/** Saves the minified resource to disk */
+	/**
+	 * Saves the minified resource to disk
+	 */
 	private void storeFile(final Resource resource, final String packedResource) throws IOException {
 		String cacheFilePath = SLASH + getCacheFilePath() + SLASH;
 		String realPath = pageContext.getServletContext().getRealPath(cacheFilePath);
@@ -394,8 +403,7 @@ public abstract class PackTag extends BaseTag {
 		StringBuffer buffer = new StringBuffer();
 		if (isCachetypeDisabled()) {
 			buffer.append(resource.getAbsolutePath());
-		}
-		else if (isCachetypeServlet()) {
+		} else if (isCachetypeServlet()) {
 			if (resource.isCombined() || isExternalResource(resource.getAbsolutePath())) {
 				buffer.append(getContextPath());
 				buffer.append(SLASH);
@@ -406,23 +414,20 @@ public abstract class PackTag extends BaseTag {
 				}
 				buffer.append(isExternalResource(resource.getAbsolutePath()) ? "external." : "combined.");
 				buffer.append(getResourceExtension());
-			}
-			else {
+			} else {
 				String cleanPath = URIUtils.cleanRelativePath(resource.getAbsolutePath());
 				int indexWebInf = cleanPath.indexOf("/WEB-INF/");
 				if (indexWebInf >= 0) {
 					buffer.append(cleanPath.substring(0, indexWebInf));
 					buffer.append(cleanPath.substring(indexWebInf + 8, cleanPath.length()));
-				}
-				else {
+				} else {
 					buffer.append(cleanPath);
 				}
 			}
 			buffer.append(".h");
 			buffer.append(resource.getMinifiedHashcode());
 			buffer.append(".pack");
-		}
-		else if (isCachetypeFile()) {
+		} else if (isCachetypeFile()) {
 			buffer.append(getContextPath());
 			buffer.append(SLASH);
 			buffer.append(getCacheFilePath());
@@ -454,8 +459,7 @@ public abstract class PackTag extends BaseTag {
 					result |= hasResourceChanged(r);
 				}
 				//result = hasResourceChanged(wildcardResource);
-			}
-			else {
+			} else {
 				long lastModified = getFileLastModifiedTimeStamp(getContextlessPath(resource.getAbsolutePath()));
 				if (lastModified != resource.getFileTimestamp()) {
 					result = true;
@@ -478,17 +482,21 @@ public abstract class PackTag extends BaseTag {
 	}
 
 
-	/** Writes the minified resource to the generated html-page */
+	/**
+	 * Writes the minified resource to the generated html-page
+	 */
 	protected abstract void writeResouce(JspWriter writer, String path) throws Exception;
 
 
-	/** Returns the PackStrategy, depending on the resourcetype */
+	/**
+	 * Returns the PackStrategy, depending on the resourcetype
+	 */
 	protected PackStrategy getPackStrategy() throws Exception {
 		String className = getPackStrategyClassName(getStrategyName());
 		if ((className == null) || className.equals(EMPTY_STRING)) {
 			return getResourceDefaultStrategy();
 		}
-		return (PackStrategy)Class.forName(className).newInstance();
+		return (PackStrategy) Class.forName(className).newInstance();
 	}
 
 
@@ -498,11 +506,15 @@ public abstract class PackTag extends BaseTag {
 	protected abstract PackStrategy getResourceDefaultStrategy();
 
 
-	/** Returns the typical file-extension of the concrete resource */
+	/**
+	 * Returns the typical file-extension of the concrete resource
+	 */
 	protected abstract String getResourceExtension();
 
 
-	/** Returns the MIME-Type of the resource */
+	/**
+	 * Returns the MIME-Type of the resource
+	 */
 	protected abstract String getMimeType();
 
 
