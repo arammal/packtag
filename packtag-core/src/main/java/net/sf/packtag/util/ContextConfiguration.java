@@ -1,21 +1,20 @@
 /* Project pack:tag >> https://github.com/galan/packtag */
 package net.sf.packtag.util;
 
+import net.sf.packtag.ApplicationConfiguration;
+import net.sf.packtag.cache.provider.DefaultCacheProvider;
+
+import javax.servlet.ServletContext;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Properties;
-
-import javax.servlet.ServletContext;
-
-import net.sf.packtag.cache.provider.DefaultCacheProvider;
-
 
 
 /**
  * Keeps track of the configuration settings in the /WEB-INF/packtag.properties and /WEB-INF/packtag.user.properties file.
  * Note: The configuration is not longet stored in the web.xml.
  *
- * @author  Daniel Galán y Martins
+ * @author Daniel Galán y Martins
  */
 public class ContextConfiguration {
 
@@ -32,6 +31,7 @@ public class ContextConfiguration {
 	private final static String FALSE = Boolean.FALSE.toString();
 
 	private static Properties properties;
+	private static ApplicationConfiguration appConfiguration;
 
 	/** Singleton for the cache file path */
 	private static String cacheFilePath;
@@ -47,8 +47,7 @@ public class ContextConfiguration {
 			if (is != null) {
 				result.load(is);
 			}
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			SafeLogger.error(ContextConfiguration.class, "Could not load file: /WEB-INF/packtag.properties", ex);
 		}
 		try {
@@ -56,8 +55,7 @@ public class ContextConfiguration {
 			if (is != null) {
 				result.load(is);
 			}
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			SafeLogger.error(ContextConfiguration.class, "Could not load file: /WEB-INF/packtag.user.properties", ex);
 		}
 		return result;
@@ -133,11 +131,19 @@ public class ContextConfiguration {
 	}
 
 	public static boolean isEmbeddedResourcesEnabled(final ServletContext context) {
-		return getProperty(context, "resources.embedded", FALSE).equalsIgnoreCase(TRUE);
+		if (appConfiguration == null) {
+			return getProperty(context, "resources.embedded", FALSE).equalsIgnoreCase(TRUE);
+		}
+
+		return appConfiguration.isEmbeddedResourcesEnabled();
 	}
 
 	public static String getEmbeddedResourcesContainer(final ServletContext context) {
-		return getProperty(context, "resources.embedded.container", "META-INF/resources");
+		if (appConfiguration == null) {
+			return getProperty(context, "resources.embedded.container", "META-INF/resources");
+		}
+
+		return appConfiguration.getEmbeddedResourcesContainer();
 	}
 
 	public static String getPackStrategyClassName(final ServletContext context, final String resourceType) {
@@ -199,11 +205,9 @@ public class ContextConfiguration {
 					String charsetName = getProperty(context, "charset"); // for backward compatibility
 					if (resourcesCharsetName != null) {
 						charset = Charset.forName(resourcesCharsetName);
-					}
-					else if (charsetName != null) {
+					} else if (charsetName != null) {
 						charset = Charset.forName(charsetName);
-					}
-					else {
+					} else {
 						charset = new CharsetUtil().getDefaultCharset();
 					}
 				}
@@ -223,8 +227,7 @@ public class ContextConfiguration {
 		String cacheProvider = getProperty(context, "cache.provider", DefaultCacheProvider.class.getName());
 		try {
 			result = Class.forName(cacheProvider);
-		}
-		catch (ClassNotFoundException ex) {
+		} catch (ClassNotFoundException ex) {
 			SafeLogger.error(ContextConfiguration.class, "Could not instantiate CacheProvider", ex);
 		}
 		return result;
@@ -235,4 +238,9 @@ public class ContextConfiguration {
 		return getProperty(context, "cache.provider.path");
 	}
 
+	public static void setApplicationConfiguration(ApplicationConfiguration applicationConfiguration) {
+		synchronized (ContextConfiguration.class) {
+			appConfiguration = applicationConfiguration;
+		}
+	}
 }

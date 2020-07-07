@@ -82,7 +82,7 @@ public abstract class PackTag extends BaseTag {
 		} else {
 			if (isEnabled()) {
 				reloaded = handleSingleResourceDelegate(absolutePath);
-				Resource resource = PackCache.getResourceByAbsolutePath(getServletContext(), absolutePath);
+				Resource resource = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), absolutePath);
 
 				if (writePackedResource && (!isTrackingResources() || !isResourceDelivered(absolutePath))) {
 					writeResouce(pageContext.getOut(), resource.getMappedPath());
@@ -100,8 +100,8 @@ public abstract class PackTag extends BaseTag {
 	private boolean handleSingleResourceDelegate(final String absolutePath) throws Exception {
 		boolean reloaded = false;
 		Resource resource = null;
-		if (PackCache.existResource(getServletContext(), absolutePath)) {
-			resource = PackCache.getResourceByAbsolutePath(getServletContext(), absolutePath);
+		if (PackCache.getInstance().existResource(getServletContext(), absolutePath)) {
+			resource = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), absolutePath);
 			if (hasResourceChanged(resource)) {
 				resource = reloadSingleResource(absolutePath);
 				reloaded = true;
@@ -118,8 +118,8 @@ public abstract class PackTag extends BaseTag {
 		boolean reloaded = false;
 		// Reloading is outside the enabled-block on wildcard paths, because elsewise no resource can be written.
 		Resource resource = null;
-		if (PackCache.existResource(getServletContext(), absolutePath)) {
-			resource = PackCache.getResourceByAbsolutePath(getServletContext(), absolutePath);
+		if (PackCache.getInstance().existResource(getServletContext(), absolutePath)) {
+			resource = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), absolutePath);
 			if (hasResourceChanged(resource)) {
 				resource = reloadWildcardResource(absolutePath);
 				reloaded = true;
@@ -195,8 +195,8 @@ public abstract class PackTag extends BaseTag {
 	private Resource handleMultipleAbsolutePaths(final boolean reloaded, final List absolutePaths) throws Exception {
 		Resource resource = null;
 		String combinedAbsolutePaths = absolutePaths.toString();
-		if (PackCache.existResource(getServletContext(), combinedAbsolutePaths) && !reloaded) {
-			resource = PackCache.getResourceByAbsolutePath(getServletContext(), combinedAbsolutePaths);
+		if (PackCache.getInstance().existResource(getServletContext(), combinedAbsolutePaths) && !reloaded) {
+			resource = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), combinedAbsolutePaths);
 		} else {
 			resource = reloadCombinedResource(absolutePaths);
 		}
@@ -312,7 +312,7 @@ public abstract class PackTag extends BaseTag {
 		resource.setAbsolutePath(absolutePath);
 		resource.setMappedPath(determineMappedPath(resource));
 
-		PackCache.store(getServletContext(), resource, true);
+		PackCache.getInstance().store(getServletContext(), resource, true);
 		return resource;
 	}
 
@@ -333,7 +333,7 @@ public abstract class PackTag extends BaseTag {
 		result = result.cloneObject();
 		result.setWildcardAbsolutePaths(result.getAbsolutePath());
 		result.setAbsolutePath(absolutePath);
-		PackCache.store(getServletContext(), result, true);
+		PackCache.getInstance().store(getServletContext(), result, true);
 
 		//resource = handleWildcardResource(files);
 		return result;
@@ -350,7 +350,7 @@ public abstract class PackTag extends BaseTag {
 		Iterator iterAps = absolutePaths.iterator();
 		while (iterAps.hasNext()) {
 			String currentAbsolutePath = (String) iterAps.next();
-			Resource resource = PackCache.getResourceByAbsolutePath(getServletContext(), currentAbsolutePath);
+			Resource resource = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), currentAbsolutePath);
 			minifedBuffer.append(resource.getMinifedResource());
 			minifedBuffer.append("\n");
 		}
@@ -372,7 +372,7 @@ public abstract class PackTag extends BaseTag {
 		resource.setAbsolutePath(absolutePaths.toString());
 		resource.setMappedPath(determineMappedPath(resource));
 
-		PackCache.store(getServletContext(), resource, false);
+		PackCache.getInstance().store(getServletContext(), resource, false);
 		return resource;
 	}
 
@@ -452,10 +452,10 @@ public abstract class PackTag extends BaseTag {
 		boolean result = false;
 		if (isFileCheckTimestamps() && !isExternalResource(resource.getAbsolutePath())) {
 			if (resource.isWildcard()) {
-				//Resource wildcardResource = PackCache.getResourceByAbsolutePath(resource.getWildcardAbsolutePaths());
+				//Resource wildcardResource = PackCache.getInstance().getResourceByAbsolutePath(resource.getWildcardAbsolutePaths());
 				String[] wildcardAp = resource.getWildcardAbsolutePathsSplitted();
 				for (int i = 0; i < wildcardAp.length; i++) {
-					Resource r = PackCache.getResourceByAbsolutePath(getServletContext(), wildcardAp[i]);
+					Resource r = PackCache.getInstance().getResourceByAbsolutePath(getServletContext(), wildcardAp[i]);
 					result |= hasResourceChanged(r);
 				}
 				//result = hasResourceChanged(wildcardResource);

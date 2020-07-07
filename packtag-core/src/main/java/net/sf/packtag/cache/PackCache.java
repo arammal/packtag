@@ -1,16 +1,16 @@
 /* Project pack:tag >> https://github.com/galan/packtag */
 package net.sf.packtag.cache;
 
-import javax.servlet.ServletContext;
-
+import net.sf.packtag.ApplicationConfiguration;
 import net.sf.packtag.util.ContextConfiguration;
 
+import javax.servlet.ServletContext;
 
 
 /**
  * Singleton to the Cache
  *
- * @author  Daniel Galán y Martins
+ * @author Daniel Galán y Martins
  */
 public class PackCache {
 
@@ -20,15 +20,47 @@ public class PackCache {
 
 	//private final ResourceCache resourceCache = new ResourceCache();
 
-	private static PackCache getInstance() {
+	public static PackCache instantiate(ApplicationConfiguration appConfiguration) {
 		if (instance == null) {
 			synchronized (PackCache.class) {
 				if (instance == null) {
 					instance = new PackCache();
+
+					if (appConfiguration != null) {
+						ContextConfiguration.setApplicationConfiguration(appConfiguration);
+					}
 				}
 			}
 		}
 		return instance;
+	}
+
+	public static PackCache getInstance() {
+		return instantiate(null);
+	}
+
+	public Resource getResourceByAbsolutePath(final ServletContext context, final String absolutePath) {
+		return getResourceCache(context).getResourceByAbsolutePath(absolutePath);
+	}
+
+
+	public Resource getResourceByMappedPath(final ServletContext context, final String mappedPath) {
+		return getResourceCache(context).getResourceByMappedPath(mappedPath);
+	}
+
+
+	public boolean existResource(final ServletContext context, final String absolutePath) {
+		return getResourceCache(context).existResource(absolutePath);
+	}
+
+
+	public void store(final ServletContext context, final Resource resource, final boolean clearDependingCombinedResources) {
+		getResourceCache(context).store(resource, clearDependingCombinedResources);
+	}
+
+
+	public void clearCache(final ServletContext context) {
+		getResourceCache(context).clearCache();
 	}
 
 
@@ -40,30 +72,4 @@ public class PackCache {
 		}
 		return provider;
 	}
-
-
-	public static Resource getResourceByAbsolutePath(final ServletContext context, final String absolutePath) {
-		return getInstance().getResourceCache(context).getResourceByAbsolutePath(absolutePath);
-	}
-
-
-	public static Resource getResourceByMappedPath(final ServletContext context, final String mappedPath) {
-		return getInstance().getResourceCache(context).getResourceByMappedPath(mappedPath);
-	}
-
-
-	public static boolean existResource(final ServletContext context, final String absolutePath) {
-		return getInstance().getResourceCache(context).existResource(absolutePath);
-	}
-
-
-	public static void store(final ServletContext context, final Resource resource, final boolean clearDependingCombinedResources) {
-		getInstance().getResourceCache(context).store(resource, clearDependingCombinedResources);
-	}
-
-
-	public static void clearCache(final ServletContext context) {
-		getInstance().getResourceCache(context).clearCache();
-	}
-
 }

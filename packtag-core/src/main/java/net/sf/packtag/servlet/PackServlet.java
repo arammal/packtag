@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.packtag.ApplicationConfiguration;
 import net.sf.packtag.cache.PackCache;
 import net.sf.packtag.cache.Resource;
 import net.sf.packtag.util.HttpHeader;
@@ -36,8 +37,17 @@ public class PackServlet extends HttpServlet {
 	private static final String CHARSET_UTF8 = ";charset=utf-8";
 
 
+
+	public PackServlet(ApplicationConfiguration appConfiguration) {
+		PackCache.instantiate(appConfiguration);
+	}
+
+	public PackServlet() {
+		this(null);
+	}
+
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-		Resource resource = PackCache.getResourceByMappedPath(getServletContext(), request.getRequestURI());
+		Resource resource = PackCache.getInstance().getResourceByMappedPath(getServletContext(), request.getRequestURI());
 
 		if (resource == null) {
 			response.sendError(404, "The requested packed resource was not found.");

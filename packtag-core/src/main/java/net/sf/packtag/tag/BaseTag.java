@@ -67,13 +67,13 @@ public abstract class BaseTag extends BodyTagSupport {
 
 	protected String determineAbsolutePath(final String source) {
 		String result = source;
-		if (result != null) {
-			result = result.trim();
-			if (result.startsWith(SLASH)) {
-				result = getContextPath() + result;
-			} else {
-				if (!isExternalResource(result)) {
-					if (!isEmbeddedResourcesEnabled()) {
+		if (!isEmbeddedResourcesEnabled()) {
+			if (result != null) {
+				result = result.trim();
+				if (result.startsWith(SLASH)) {
+					result = getContextPath() + result;
+				} else {
+					if (!isExternalResource(result)) {
 						HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 						String uri = request.getRequestURI();
 						// cut a possible file
