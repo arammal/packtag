@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.galan.packtag</groupId>
 	<artifactId>packtag-parent</artifactId>
-	<version>3.13.0</version>
+	<version>3.13.0-wu1</version>
 	<packaging>pom</packaging>
 
 	<name>packtag</name>
@@ -277,20 +277,20 @@
 				</configuration>
 			</plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>${plugin.maven-gpg.version}</version>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-gpg-plugin</artifactId>-->
+<!--				<version>${plugin.maven-gpg.version}</version>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>sign-artifacts</id>-->
+<!--						<phase>verify</phase>-->
+<!--						<goals>-->
+<!--							<goal>sign</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
 
 			<plugin>
 				<!-- required to bundle javadoc files in deployment -->
@@ -340,17 +340,41 @@
 		</plugins>
 	</reporting>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>Sonatype Nexus Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
+	<repositories>
 		<repository>
-			<id>sonatype-nexus-staging</id>
-			<name>Nexus Release Repository</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<id>wu-releases</id>
+			<url>http://nexus.wheelsup.com:8081/repository/wu-releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
+		<repository>
+			<id>wu-snapshots</id>
+			<url>http://nexus.wheelsup.com:8081/repository/wu-snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<distributionManagement>
+		<repository>
+			<id>nexus</id>
+			<name>wu-releases</name>
+			<url>http://nexus.wheelsup.com:8081/repository/wu-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>nexus</id>
+			<name>wu-snapshot</name>
+			<url>http://nexus.wheelsup.com:8081/repository/wu-snapshots</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 
