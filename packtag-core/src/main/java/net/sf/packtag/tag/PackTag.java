@@ -247,23 +247,20 @@ public abstract class PackTag extends BaseTag {
 			if (isEmbeddedResourcesEnabled()) {
 				String embeddedPath = getEmbeddedResourcesContainer() + absolutePath;
 				InputStream embeddedInputStream = null;
-				try {
-					embeddedInputStream = PackTag.class.getResourceAsStream(embeddedPath);
-					if (embeddedInputStream == null) {
-						embeddedInputStream = PackTag.class.getClassLoader().getResourceAsStream(embeddedPath);
-					}
-					if (embeddedInputStream == null) {
-						embeddedInputStream = ClassLoader.getSystemResourceAsStream(embeddedPath);
-					}
-					if (embeddedInputStream == null) {
-						embeddedInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(embeddedPath);
-					}
-					if (embeddedInputStream == null) {
-						throw new IOException("Invalid path");
-					}
-				} catch (IOException ioe) {
-					throw new PackException("Could not load embedded resource: " + embeddedPath, ioe);
+				embeddedInputStream = PackTag.class.getResourceAsStream(embeddedPath);
+				if (embeddedInputStream == null) {
+					embeddedInputStream = PackTag.class.getClassLoader().getResourceAsStream(embeddedPath);
 				}
+				if (embeddedInputStream == null) {
+					embeddedInputStream = ClassLoader.getSystemResourceAsStream(embeddedPath);
+				}
+				if (embeddedInputStream == null) {
+					embeddedInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(embeddedPath);
+				}
+				if (embeddedInputStream == null) {
+					throw new PackException("Could not load embedded resource: " + embeddedPath);
+				}
+
 				result = embeddedInputStream;
 			} else {
 				String contextlessPath = getContextlessPath(absolutePath);
